@@ -1,0 +1,137 @@
+---
+title: "Technology Gobbledygook Generator"
+author: "Thomas Speidel"
+date: "06/08/2018"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+#-----------------------------------------------------------------------------------------#
+# SET COMMON OPTIONS
+#-----------------------------------------------------------------------------------------#
+library(knitr)
+library(rmdformats)
+
+options(max.print="75")
+
+knitr::opts_chunk$set(dev='png', 
+                      echo = TRUE, 
+                      warning=FALSE, 
+                      message=FALSE, 
+                      fig.path = 'Figures/', 
+                      strip.white = TRUE, 
+                      dpi = 144)
+
+knitr::opts_knit$set(eval.after = 'fig.cap')
+knitr::opts_knit$set(width=75)
+
+#-----------------------------------------------------------------------------------------#
+# SET PRETTY LOOKING NUMBERS
+#-----------------------------------------------------------------------------------------#
+knitr::knit_hooks$set(inline = function(x) {
+      if(is.numeric(x)){
+          return(prettyNum(x, big.mark=","))
+      }else{
+          return(x)
+       }
+   })
+
+
+```
+
+
+```{r, eval=TRUE,  message=FALSE}
+#-----------------------------------------------------------------------------------------#
+# NEEDED PACKAGES
+#-----------------------------------------------------------------------------------------#
+library(markovifyR)
+library(markovchain)
+library(dplyr)
+library(tidytext)
+library(tidyverse)
+library(tm)
+library(purrr)
+library(stringr)
+library(textclean)
+library(kableExtra)
+library("extrafont")
+
+# font_import(pattern="[O/o]swald")
+# font_import(pattern="PT_Sans")
+# font_import(pattern="[R/r]aleway")
+# loadfonts(device="win")
+
+# system("pip install markovify")
+# devtools::install_github("abresler/markovifyR")
+## https://github.com/abresler/markovifyR
+
+```
+
+
+
+
+Much hype is generated from technology consulting firms and vendors. This has led firms like Gartner to publish the now popular ???[Hype Cycle](https://en.wikipedia.org/wiki/Hype_cycle)???.
+
+This is a **humorous collection** of (loosely) convincing sentences I generated based on training data found on the website of 5 popular technology vendor and consulting firms. Of course, the selection of the training data is biased, as I only looked for areas where buzzwords are common. 
+
+The generator uses a [Markov chain](https://en.wikipedia.org/wiki/Markov_chain), a true random process model, not another meaningless term.
+
+
+```{r, eval=TRUE, message=FALSE}
+
+## Load data
+# cname <- file.path("F:/GoogleDrive/Personal_Work/Gibberish_Generator/Data")
+
+cname <- file.path("/home/tspeidel/GoogleDrive/Personal_Work/Gibberish_Generator/Data")
+
+docs <- VCorpus(DirSource(cname))
+docs <-data.frame(text = unlist(sapply(docs, `[`, "content")), stringsAsFactors = F)
+
+
+## Cleanup
+docs <- docs %>%
+  filter(cumsum(text == "") > 0,
+         cumsum(str_detect(text, "^--")) == 0) %>%
+  drop_empty_row() %>%
+  tibble::rowid_to_column("id")
+
+docs$text <- strip(docs$text, char.keep = c("?", ",", ";", "."))
+docs$text <- replace_contraction(docs$text)
+docs$text <- replace_html(docs$text)
+docs$text <- replace_non_ascii(docs$text)
+docs$text <- replace_number(docs$text, remove=TRUE)
+docs$text <- replace_symbol(docs$text)
+docs$text <- replace_white(docs$text)
+
+
+
+## Markov model
+buzz <- docs %>% pull(text)
+
+markov_model <-
+  generate_markovify_model(
+    input_text = buzz,
+    markov_state_size = 2L,
+    max_overlap_total = 25,
+    max_overlap_ratio = .85
+  )
+
+
+buzz.out <- markovify_text(
+  markov_model = markov_model,
+  maximum_sentence_length = NULL,
+  output_column_name = "Gibberish",
+  count = 30,
+  tries = 200,
+  only_distinct = TRUE,
+  return_message = FALSE
+)
+
+kable(buzz.out, "html", align = "l", digits = 1) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = F, position = "left")
+  
+```
+
+
+
