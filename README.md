@@ -1,6 +1,6 @@
-#Technology Gobbledygook Generator
+# Technology Gobbledygook Generator
 
-*If you are unsure where to click, you probably want [this]()*
+*If you are unsure where to click, you probably want [this](https://github.com/tspeidel/gibberish/blob/master/Gibberish_Generator.md)*
 
 Much hype is generated from technology consulting firms and vendors. This has led firms like Gartner to publish the now popular “[Hype Cycle](https://en.wikipedia.org/wiki/Hype_cycle)”.
 
